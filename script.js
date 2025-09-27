@@ -19,28 +19,7 @@ if (navigator.geolocation) {
 
 
 
-function getLocation() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const { latitude, longitude } = pos.coords;
-                document.getElementById("locationField").value =
-                    `Lat: ${latitude}, Lng: ${longitude}`;
 
-                // Enable submit button once location is set
-                const btn = document.getElementById("submitBtn");
-                btn.disabled = false;
-                btn.style.cursor = "pointer";
-                btn.style.background = "#0077cc";
-            },
-            () => {
-                alert("❌ Location access denied. You must allow location to submit.");
-            }
-        );
-    } else {
-        alert("❌ Geolocation not supported in this browser.");
-    }
-}
 
 // Location Fetch Function
 function getLocation() {
@@ -50,6 +29,11 @@ function getLocation() {
         currentCoords = [pos.coords.latitude, pos.coords.longitude];
         document.getElementById("locationField").value =
           `Lat: ${pos.coords.latitude.toFixed(6)}, Lon: ${pos.coords.longitude.toFixed(6)}`;
+          // Enable submit button once location is set
+                const btn = document.getElementById("submitBtn");
+                btn.disabled = false;
+                btn.style.cursor = "pointer";
+                btn.style.background = "#0077cc";
       },
       () => {
         alert("Unable to fetch location. Please enable GPS.");
@@ -59,75 +43,6 @@ function getLocation() {
     alert("Geolocation not supported by your browser.");
   }
 }
-
-
-
-
-
-
-function addReport(report) {
-  reports.unshift(report);
-
-  // Add marker
-  L.marker([report.lat, report.lon])
-    .addTo(map)
-    .bindPopup(`<b>${report.type}</b><br>${report.desc}`);
-
-  // Update heatmap
-  heatPoints.push([report.lat, report.lon, 1]);
-  heatLayer.setLatLngs(heatPoints);
-
-  // Refresh dashboard
-  renderReports("all");
-  updateStats();
-  if (typeof updateChart === "function") updateChart(); // safe check
-}
-
-
-
-
-
-
-// Report Form Submit
-document.getElementById("reportForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  const type = document.getElementById("eventType").value;
-  const desc = document.getElementById("desc").value;
-  const img = document.getElementById("imageUpload").files[0];
-  const vid = document.getElementById("videoUpload").files[0];
-
-  if (!currentCoords) {
-    showToast("⚠️ Please fetch your location before submitting.");
-    return;
-  }
-
-  const [lat, lon] = currentCoords;
-  const newReport = {
-    type,
-    desc,
-    lat,
-    lon,
-    img,
-    vid,
-    time: new Date().toLocaleString()
-  };
-
-  // 1. Save + update dashboard/map
-  addReport(newReport);
-
-  // 2. Show success
-  showToast("✅ Report submitted successfully!");
-
-  // 3. Switch to dashboard immediately
-  showPage("dashboardPage");
-
-  const btn = document.getElementById("submitBtn");
-  btn.disabled = true;
-  btn.style.cursor = "not-allowed";
-  btn.style.background = "#888";
-});
-
 
 
 
@@ -183,16 +98,58 @@ function renderReports(filterType) {
       }
       reportList.appendChild(reportDiv);
     });
-
-
-
 }
+
 
 // Filter Reports
 function filterReports() {
-  const filterValue = document.getElementById("filterSelect").value;
-  renderReports(filterValue);
+    const filterValue = document.getElementById("filterSelect").value;
+    renderReports(filterValue);
 }
+
+
+
+
+
+
+// Page Switcher
+function showPage(pageId) {
+  document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
+  document.getElementById(pageId).style.display = "block";
+
+  // 👇 Fix map rendering if dashboard is opened
+  if (pageId === "dashboardPage") {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+  }
+
+  // ✅ Auto-reset form every time report page is opened
+  if (pageId === "reportPage") {
+    const form = document.getElementById("reportForm");
+    if (form) form.reset();
+
+    const btn = document.getElementById("submitBtn");
+
+    // 👇 NEW LOGIC
+    if (currentCoords) {
+      // Reuse last location
+      document.getElementById("locationField").value =
+        `Lat: ${currentCoords[0].toFixed(6)}, Lon: ${currentCoords[1].toFixed(6)}`;
+      btn.disabled = false;
+      btn.style.cursor = "pointer";
+      btn.style.background = "#0077cc";
+    } else {
+      // Ask for fresh location
+      document.getElementById("locationField").value = "";
+      btn.disabled = true;
+      btn.style.cursor = "not-allowed";
+      btn.style.background = "#888";
+    }
+  }
+}
+
+
 
 
 
@@ -211,6 +168,86 @@ function showToast(message) {
     setTimeout(() => toast.remove(), 500);
   }, 2500);
 }
+
+
+
+
+
+
+
+
+function addReport(report) {
+  reports.unshift(report);
+
+  // Add marker
+  L.marker([report.lat, report.lon])
+    .addTo(map)
+    .bindPopup(`<b>${report.type}</b><br>${report.desc}`);
+
+  // Update heatmap
+  heatPoints.push([report.lat, report.lon, 1]);
+  heatLayer.setLatLngs(heatPoints);
+
+  // Refresh dashboard
+  renderReports("all");
+  updateStats();
+  if (typeof updateChart === "function") updateChart(); // safe check
+}
+
+
+
+
+
+// Report Form Submit
+document.getElementById("reportForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const type = document.getElementById("eventType").value;
+  const desc = document.getElementById("desc").value;
+  const img = document.getElementById("imageUpload").files[0];
+  const vid = document.getElementById("videoUpload").files[0];
+
+  if (!currentCoords) {
+    showToast("⚠️ Please fetch your location before submitting.");
+    return;
+  }
+
+  const [lat, lon] = currentCoords;
+  const newReport = {
+    type,
+    desc,
+    lat,
+    lon,
+    img,
+    vid,
+    time: new Date().toLocaleString()
+  };
+
+  // Save report
+  addReport(newReport);
+
+  // Show success
+  showToast("✅ Report submitted successfully!");
+
+  // Reset form completely
+  const form = document.getElementById("reportForm");
+  form.reset();
+  currentCoords = null;
+  document.getElementById("locationField").value = "";
+
+  // Disable submit until new location is fetched again
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.style.cursor = "not-allowed";
+  btn.style.background = "#888";
+
+});
+
+
+
+
+
+
 
 
 
@@ -364,22 +401,6 @@ document.getElementById("loginForm")?.addEventListener("submit", (e) => {
 
 
 
-
-
-
-// Page Switcher
-
-function showPage(pageId) {
-  document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
-  document.getElementById(pageId).style.display = "block";
-
-  // 👇 Fix map rendering if dashboard is opened
-  if (pageId === "dashboardPage") {
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 300);
-  }
-}
 
 
 
