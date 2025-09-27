@@ -17,6 +17,31 @@ if (navigator.geolocation) {
   });
 }
 
+
+
+function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                document.getElementById("locationField").value =
+                    `Lat: ${latitude}, Lng: ${longitude}`;
+
+                // Enable submit button once location is set
+                const btn = document.getElementById("submitBtn");
+                btn.disabled = false;
+                btn.style.cursor = "pointer";
+                btn.style.background = "#0077cc";
+            },
+            () => {
+                alert("❌ Location access denied. You must allow location to submit.");
+            }
+        );
+    } else {
+        alert("❌ Geolocation not supported in this browser.");
+    }
+}
+
 // Location Fetch Function
 function getLocation() {
   if (navigator.geolocation) {
@@ -35,29 +60,97 @@ function getLocation() {
   }
 }
 
+
+
+
+
+
+function addReport(report) {
+  reports.unshift(report);
+
+  // Add marker
+  L.marker([report.lat, report.lon])
+    .addTo(map)
+    .bindPopup(`<b>${report.type}</b><br>${report.desc}`);
+
+  // Update heatmap
+  heatPoints.push([report.lat, report.lon, 1]);
+  heatLayer.setLatLngs(heatPoints);
+
+  // Refresh dashboard
+  renderReports("all");
+  updateStats();
+  if (typeof updateChart === "function") updateChart(); // safe check
+}
+
+
+
+
+
+
 // Report Form Submit
 document.getElementById("reportForm").addEventListener("submit", (e) => {
   e.preventDefault();
+
   const type = document.getElementById("eventType").value;
   const desc = document.getElementById("desc").value;
   const img = document.getElementById("imageUpload").files[0];
   const vid = document.getElementById("videoUpload").files[0];
 
-  if (currentCoords) {
-    const [lat, lon] = currentCoords;
-    const newReport = { type, desc, lat, lon, img, vid };
-    reports.unshift(newReport);
-
-    L.marker([lat, lon]).addTo(map).bindPopup(`${type}<br>${desc}`);
-    heatPoints.push([lat, lon, 1]);
-    heatLayer.setLatLngs(heatPoints);
-
-    renderReports("all");
-    alert("Report submitted and added to dashboard!");
-  } else {
-    alert("Please fetch your current location before submitting.");
+  if (!currentCoords) {
+    showToast("⚠️ Please fetch your location before submitting.");
+    return;
   }
+
+  const [lat, lon] = currentCoords;
+  const newReport = {
+    type,
+    desc,
+    lat,
+    lon,
+    img,
+    vid,
+    time: new Date().toLocaleString()
+  };
+
+  // 1. Save + update dashboard/map
+  addReport(newReport);
+
+  // 2. Show success
+  showToast("✅ Report submitted successfully!");
+
+  // 3. Switch to dashboard immediately
+  showPage("dashboardPage");
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.style.cursor = "not-allowed";
+  btn.style.background = "#888";
 });
+
+
+
+
+
+
+
+
+
+function updateStats() {
+  document.getElementById("totalReports").textContent = reports.length;
+  document.getElementById("highWaveCount").textContent = reports.filter(r => r.type === "High Wave").length;
+  document.getElementById("stormSurgeCount").textContent = reports.filter(r => r.type === "Storm Surge").length;
+  document.getElementById("tsunamiCount").textContent = reports.filter(r => r.type === "Tsunami").length;
+  document.getElementById("floodingCount").textContent = reports.filter(r => r.type === "Flooding").length;
+}
+
+
+
+
+
+
+
+
 
 
 // Render Reports
@@ -74,7 +167,9 @@ function renderReports(filterType) {
         <h4>${r.type}</h4>
         <p>${r.desc}</p>
         <p><strong>Location:</strong> Lat ${r.lat.toFixed(4)}, Lon ${r.lon.toFixed(4)}</p>
+        <p><em>${r.time || "Just now"}</em></p>
       `;
+
       if (r.img) {
         const imgEl = document.createElement("img");
         imgEl.src = URL.createObjectURL(r.img);
@@ -88,6 +183,9 @@ function renderReports(filterType) {
       }
       reportList.appendChild(reportDiv);
     });
+
+
+
 }
 
 // Filter Reports
@@ -95,6 +193,38 @@ function filterReports() {
   const filterValue = document.getElementById("filterSelect").value;
   renderReports(filterValue);
 }
+
+
+
+
+
+
+
+function showToast(message) {
+  let toast = document.createElement("div");
+  toast.className = "toast show";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 500);
+  }, 2500);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Toggle between Login and Signup
 function toggleAuth() {
@@ -110,8 +240,44 @@ function toggleAuth() {
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 // Mock User Storage (localStorage)
 let users = JSON.parse(localStorage.getItem("users")) || [];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Sign Up
 document.getElementById("signupForm")?.addEventListener("submit", (e) => {
@@ -131,6 +297,36 @@ document.getElementById("signupForm")?.addEventListener("submit", (e) => {
   alert("Sign Up successful! Please login.");
   toggleAuth();
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Login
 document.getElementById("loginForm")?.addEventListener("submit", (e) => {
@@ -152,11 +348,55 @@ document.getElementById("loginForm")?.addEventListener("submit", (e) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Page Switcher
+
 function showPage(pageId) {
   document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
   document.getElementById(pageId).style.display = "block";
+
+  // 👇 Fix map rendering if dashboard is opened
+  if (pageId === "dashboardPage") {
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 300);
+  }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Queries
 function submitQuery() {
@@ -179,6 +419,23 @@ function submitQuery() {
   respBox.style.display = "block"; // ensure box is visible
   respBox.textContent = resp;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // 👇 ADDED: functions for Register / Sign up

@@ -9,6 +9,9 @@
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 </head>
 <body>
+
+
+
   <!-- Header -->
   <header class="site-header">
     <div class="logo">
@@ -24,135 +27,265 @@
     </nav>
   </header>
 
-  <!-- Home Page -->
-  <section id="homePage">
+
+
+
+
+
+
+
+<!-- Home Page -->
+<section id="homePage">
     <div class="hero">
       <h1>Welcome to Ocean Hazard Notifier Platform</h1>
       <p>Stay updated on ocean hazards and disaster alerts!</p>
     </div>
 
+
+
     <!-- Social Media Scrolling Feed -->
     <div class="social-feed">
       <h2>Live Hazard Updates</h2>
       <div class="feed-container" id="socialFeed">
-        <div class="feed-item">🌊 High Wave Alert in Chennai – Stay away from beaches.</div>
-        <div class="feed-item">🌪️ Cyclone brewing near Odisha Coast – Monitor updates.</div>
-        <div class="feed-item">🌊 Tsunami early warning drill conducted in Andaman region.</div>
-        <div class="feed-item">💨 Strong winds expected in Gujarat coastline – Fishermen advised caution.</div>
-        <div class="feed-item">🌊 Coastal flooding reported in Kerala – Disaster response teams alerted.</div>
+          <div class="feed-item">🌊 High Wave Alert in Chennai – Stay away from beaches.</div>
+          <div class="feed-item">🌪️ Cyclone brewing near Odisha Coast – Monitor updates.</div>
+          <div class="feed-item">🌊 Tsunami early warning drill conducted in Andaman region.</div>
+          <div class="feed-item">💨 Strong winds expected in Gujarat coastline – Fishermen advised caution.</div>
+          <div class="feed-item">🌊 Coastal flooding reported in Kerala – Disaster response teams alerted.</div>
       </div>
     </div>
-  </section>
+</section>
 
-  <!-- Dashboard -->
-  <section id="dashboardPage" style="display:none;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Dashboard -->
+<section id="dashboardPage" style="display:none;">
     <h2>Interactive Hazard Dashboard</h2>
     <div id="map"></div>
 
+
     <!-- Filter Section -->
     <div class="filter-bar">
-      <label for="filterSelect"><strong>Filter Reports:</strong></label>
-      <select id="filterSelect" onchange="filterReports()">
-        <option value="all">All</option>
-        <option value="High Wave">High Wave</option>
-        <option value="Storm Surge">Storm Surge</option>
-        <option value="Tsunami">Tsunami</option>
-        <option value="Flooding">Flooding</option>
-      </select>
+        <label for="filterSelect"><strong>Filter Reports:</strong></label>
+        <select id="filterSelect" onchange="filterReports()">
+            <option value="all">All</option>
+            <option value="High Wave">High Wave</option>
+            <option value="Storm Surge">Storm Surge</option>
+            <option value="Tsunami">Tsunami</option>
+            <option value="Flooding">Flooding</option>
+        </select>
     </div>
 
+
+    <!-- Stats Overview -->
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3 id="totalReports">0</h3>
+            <p>Total Reports</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="highWaveCount">0</h3>
+            <p>High Wave</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="stormSurgeCount">0</h3>
+            <p>Storm Surge</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="tsunamiCount">0</h3>
+            <p>Tsunami</p>
+        </div>
+        <div class="stat-card">
+            <h3 id="floodingCount">0</h3>
+            <p>Flooding</p>
+        </div>
+    </div>
+
+
+    <!-- Recent Reports -->
     <h2>Recent Reports</h2>
     <div id="reportList" class="report-list"></div>
-  </section>
 
-  <!-- Hazard Report Form -->
-  <section id="reportPage" style="display:none;">
-    <h2>Submit Hazard Report</h2>
-    <form id="reportForm">
-      <label for="eventType">Hazard Type:</label>
-      <select id="eventType" required>
-        <option value="High Wave">High Wave</option>
-        <option value="Storm Surge">Storm Surge</option>
-        <option value="Tsunami">Tsunami</option>
-        <option value="Flooding">Flooding</option>
-        <option value="Others">Others</option>
-      </select>
 
-      <label for="desc">Description:</label>
-      <textarea id="desc" placeholder="Describe the hazard..." required></textarea>
-
-      <label for="locationField">Current Location:</label>
-      <input type="text" id="locationField" placeholder="Fetching..." readonly required>
-      <button type="button" onclick="getLocation()">📍 Fetch Current Location</button>
-
-      <label for="imageUpload">Upload Image:</label>
-      <input type="file" id="imageUpload" accept="image/*">
-
-      <label for="videoUpload">Upload Video:</label>
-      <input type="file" id="videoUpload" accept="video/*">
-
-      <button type="submit">Submit Report</button>
-    </form>
-  </section>
-
-  <!-- Login Page -->
-<section id="loginPage" style="display:none">
-  <div class="auth-box" id="loginBox">
-      <h2>Login</h2>
-      <form id="loginForm">
-        <label for="loginEmail">Email:</label>
-        <input type="email" id="loginEmail" required>
-
-        <label for="loginPassword">Password:</label>
-        <input type="password" id="loginPassword" required>
-
-        <label for="loginRole">Role:</label>
-        <select id="loginRole" required>
-          <option value="citizen">Citizen</option>
-          <option value="official">Official</option>
-        </select>
-
-        <button type="submit">Login</button>
-      </form>
-      <p>Don't have an account? <a href="#" onclick="toggleAuth()">Sign Up</a></p>
+    <!-- Live Query Box -->
+    <div class="query-box">
+        <h2>Quick Safety Queries</h2>
+        <input type="text" id="queryInput" placeholder="Ask about tsunami, cyclone, flood..." />
+        <button onclick="submitQuery()">Ask</button>
+        <div id="queryResponse" class="query-response"></div>
     </div>
-
-    <!-- Sign Up Form -->
-    <div class="auth-box" id="signupBox" style="display:none;">
-      <h2>Sign Up</h2>
-      <form id="signupForm">
-        <label for="signupName">Full Name:</label>
-        <input type="text" id="signupName" required>
-
-        <label for="signupEmail">Email:</label>
-        <input type="email" id="signupEmail" required>
-
-        <label for="signupPassword">Password:</label>
-        <input type="password" id="signupPassword" required>
-
-        <label for="signupRole">Role:</label>
-        <select id="signupRole" required>
-          <option value="citizen">Citizen</option>
-          <option value="official">Official</option>
-        </select>
-
-        <button type="submit">Sign Up</button>
-      </form>
-      <p>Already have an account? <a href="#" onclick="toggleAuth()">Login</a></p>
-    </div>
-  <!-- 👆 END ADDED -->
 </section>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Hazard Report Form -->
+<section id="reportPage" style="display:none;">
+    <h2>Submit Hazard Report</h2>
+    <form id="reportForm">
+        <label for="eventType">Hazard Type:</label>
+        <select id="eventType" required>
+            <option value="High Wave">High Wave</option>
+            <option value="Storm Surge">Storm Surge</option>
+            <option value="Tsunami">Tsunami</option>
+            <option value="Flooding">Flooding</option>
+            <option value="Others">Others</option>
+        </select>
+
+        <label for="desc">Description:</label>
+        <textarea id="desc" placeholder="Describe the hazard..." required></textarea>
+
+        <label for="locationField">Current Location:</label>
+        <input type="text" id="locationField" placeholder="Fetching..." readonly required style="flex:1;">
+        <button type="button" onclick="getLocation()">📍 Fetch Current Location</button>
+
+        <label for="imageUpload">Upload Image:</label>
+        <input type="file" id="imageUpload" accept="image/*">
+
+        <label for="videoUpload">Upload Video:</label>
+        <input type="file" id="videoUpload" accept="video/*">
+
+        <button id="submitBtn" type="submit" disabled style="margin-top:10px; background:#0077cc; 
+        color:white; padding:10px; border:none; border-radius:6px; cursor:not-allowed;">Submit Report</button>
+    </form>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Login Page -->
+<section id="loginPage" style="display:none">
+      <div class="auth-box" id="loginBox">
+          <h2>Login</h2>
+          <form id="loginForm">
+              <label for="loginEmail">Email:</label>
+              <input type="email" id="loginEmail" required>
+
+              <label for="loginPassword">Password:</label>
+              <input type="password" id="loginPassword" required>
+
+              <label for="loginRole">Role:</label>
+              <select id="loginRole" required>
+                <option value="citizen">Citizen</option>
+                <option value="official">Official</option>
+              </select>
+
+              <button type="submit">Login</button>
+          </form>
+          <p>Don't have an account? <a href="#" onclick="toggleAuth()">Sign Up</a></p>
+      </div>
+
+
+
+
+
+
+
+
+      <!-- Sign Up Form -->
+      <div class="auth-box" id="signupBox" style="display:none;">
+        <h2>Sign Up</h2>
+        <form id="signupForm">
+            <label for="signupName">Full Name:</label>
+            <input type="text" id="signupName" required>
+
+            <label for="signupEmail">Email:</label>
+            <input type="email" id="signupEmail" required>
+
+            <label for="signupPassword">Password:</label>
+            <input type="password" id="signupPassword" required>
+
+            <label for="signupRole">Role:</label>
+            <select id="signupRole" required>
+              <option value="citizen">Citizen</option>
+              <!-- <option value="official">Official</option> -->
+            </select>
+
+            <button type="submit">Sign Up</button>
+        </form>
+        <p>Already have an account? <a href="#" onclick="toggleAuth()">Login</a></p>
+      </div>
+  <!-- END ADDED -->
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!-- Query -->
-    <section id="queryPage" style="display:none;">
-      <h2 id = "m">Hazard Queries & Safety Tips</h2>
-      <textarea id="queryInput" placeholder="Ask about hazards..."></textarea><br>
-      <button id="b" onclick="submitQuery()">Submit</button>
-      <div id="queryResponse"></div>
-    </section>
+<section id="queryPage" style="display:none;">
+    <h2 id = "m">Hazard Queries & Safety Tips</h2>
+    <textarea id="queryInput" placeholder="Ask about hazards..."></textarea><br>
+    <button id="b" onclick="submitQuery()">Submit</button>
+    <div id="queryResponse"></div>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
 
   <!-- Footer -->
-  <footer>
+<footer>
   <div class="footer-links">
     <div>
       <h4>Government Links</h4>
